@@ -195,6 +195,60 @@ type 题库{
     答案 uint
 }
 ```
+
+# 后台电话池
+1. 导入数据
+2. 员工抽取数据
+3. 设置 接通（标记1） 未接（设置0 且释放） 空号（2）
+4. 员工 接通率 总池子接通率
+
+## 数据库
+```go
+池子{
+	id uint 
+	name string //名字
+	phone string //手机号
+	
+	useID uint //使用人
+	res uint // 0未使用 1接通 2空号
+	未接次数 uint //未接次数
+}
+个人统计 {
+	id uint 
+	createAt time.time //创建时间
+    userID uint //用户id
+    池子iD uint //池子id
+	
+	type uint //类型 0抽取 1接通 2未接 3空号 4释放
+	
+	time time.time //时间
+}
+每日统计{
+	id uint 
+    createAt time.time //创建时间
+    userID uint //用户id
+    
+    抽取 uint
+    接通 uint
+    未接 uint
+    空号 uint
+	退回 uint
+	总计数量 uint
+}
+月统计{
+    id uint
+    createAt time.time //创建时间
+    userID uint //用户id
+    
+    抽取 uint
+    接通 uint
+    未接 uint
+    空号 uint
+    退回 uint
+	总计数量 uint
+}
+```
+
 # 方式
 前端上传im
 
