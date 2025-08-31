@@ -120,13 +120,19 @@ type Work struct{
     Comm []Comment //评论
 }
 
-type Work struct{
+type Recommend struct{
 	ID uint //索引用
 	CreateAt time.Time //创建时间
 	
-	RecommendList []uint //推荐列表
-	WorkList []Work //文章列表ork
+	RecommendList []RecommendList //推荐列表
+	WorkList []Work `gorm:"-"`//文章列表ork 
 }
+
+type RecommendList struct{
+	WorkID uint //WorkID
+	Level uint //推荐等级
+}
+
 
 // Comment 评论
 type Comment struct{
