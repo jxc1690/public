@@ -109,11 +109,23 @@ type Work struct{
 
     IsTop bool //是否置顶
 
+	Recommend bool //是否推荐
+	RecommendLevel uint //推荐等级
+	//推荐 
+
     LikeNum uint //点赞数
     SaveNum uint //收藏数量
     CommNum uint //评论数量
 
     Comm []Comment //评论
+}
+
+type Work struct{
+	ID uint //索引用
+	CreateAt time.Time //创建时间
+	
+	RecommendList []uint //推荐列表
+	WorkList []Work //文章列表ork
 }
 
 // Comment 评论
