@@ -5,10 +5,13 @@
 
 # 共享数据
 ```go
+package export
+
+import "time"
 //用户总信息
-type user {
+type User struct{
     ID uint  //索引用ID
-    CreateAt time.time //创建时间
+    CreateAt time.Time //创建时间
     SreachID uint //搜索用
 
     PhoneNumber string //手机号
@@ -16,11 +19,12 @@ type user {
     UserName string //用户名称
 
     Points uint //积分
+	HistoryPoints []HistoryPoints //积分变动记录
 }
 
-type histroy{
+type HistoryPoints struct{
     ID uint 
-    CreateAt time.time
+    CreateAt time.Time
     UserID uint 
     Change uint //积分变动
     ChangeText string //变动原因 
@@ -72,27 +76,28 @@ type histroy{
         - 新页面 积分明细
 
 
-## 功能
-1. 获取全局配置
-    - 开关 历史推荐
-    - 首页背景图地址
-    - 我的背景图地址
+
 ## 数据库
 ```go
+package export
+
+import "time"
 // 留言区补充用户信息
-type Wall {
+type WallInfo struct{
     ID uint //索引用
     UserID uint //链接user基础信息
 
     SendWork []uint //发布的文章
     SaveWork []uint //收藏的文章
     Reply []uint //回复消息
+	
+	User *User //用户
 }
 
-type Work {
+type Work struct{
     ID uint //索引用
-    CreateAt time.time //创建时间
-    DeleteAt time.time //删除时间 删除 自己删自己的 或者控制台删除 更改为删除重新写
+    CreateAt time.Time //创建时间
+    DeleteAt time.Time //删除时间 删除 自己删自己的 或者控制台删除 更改为删除重新写
 
     UserID uint //发布人
     Type uint //类型 0爱心留言区 1光荣故事会
@@ -104,29 +109,65 @@ type Work {
 
     IsTop bool //是否置顶
 
-    Like uint //点赞数
-    Save uint //收藏数量
-    Comm uint //评论数量
+    LikeNum uint //点赞数
+    SaveNum uint //收藏数量
+    CommNum uint //评论数量
 
-    Comm []Comm //评论
+    Comm []Comment //评论
 }
 
-type Comm {
+// Comment 评论
+type Comment struct{
     ID uint //索引
 
-    WrokID uint //属于文章
+    WorkID uint //属于文章
     Reply uint //回复的消息
 
     Like uint //点赞
 
-    Title,Text string //标题以及内容
+    Text string //标题以及内容
+	
+	Work *Work //文章
+	Comment *Comment //回复的消息
 }
 
-type 屏蔽{
+// ShieldingRules 屏蔽规则
+type ShieldingRules struct{
     ID uint 
     Reg string
 }
 ```
+
+## 接口
+- 全局
+    1. [ ] 获取全局配置
+       - 开关 历史推荐
+       - 首页背景图地址
+       - 我的背景图地址
+- 个人相关
+  1. [ ] 获取个人信息
+      - 昵称 头像 搜索ID 积分
+      - 自己发布的文章（前10篇）
+  2. [ ] 获取收藏夹
+      - 收藏的文章
+  3. [ ] 获取未读消息
+        - 相关文章
+        - 相关用户
+        - 回复的评论
+  4. [ ] 获取积分变动记录(起始ID,排序类型)
+- 留言墙
+  1. [ ] 获取留言墙（起始ID,排序类型）
+      - 文章ID 标题 内容 图片 视频地址 视频首针图片 发布人ID 发布人昵称 发布人头像 发布时间 点赞数 收藏数 评论数 是否置顶
+      - 前50 评论
+  2. [ ] 获取评论(文章ID,起始ID)
+  3. [ ] 发布文章
+      - 标题 内容
+      - 图片或者视频地址
+  4. [ ] 上传图片视频
+      - 限制视频30S
+      - 限制图片9张（压缩一波
+  5. [ ] 发表评论（文章ID，回复ID，内容）
+
 # 爱心池（抽奖
 ## 页面
 1. 图片
@@ -145,27 +186,47 @@ type 屏蔽{
 
 ## 数据
 ```go
-type userinfo{
+package export
+
+import "time"
+
+type UserInfo struct {
+	
     ID uint //索引
     UserID uint //挂接
 
     LoveNumber uint //爱心点
-}
 
-type 期数{ //三位数
+	User *User //用户
+}
+// Period 周期
+type Period struct{ //三位数
     ID uint // 50左右开始
-    中奖的 {
-        奖1-4：[]uint //中奖的人的id
-    }
-    总爱心点 uint //显示的爱心点
-    目标爱心点 uint 
+	CreateAt time.Time //创建时间
+    WinList Win //中奖名单
+    LovePointNum uint //显示的爱心点
+	TargetPointNum  uint //目标爱心点
+	
+	Care []Card //卡包
 }
 
-type care{
+// Win 中奖名单
+type Win struct {
+	One []Card
+	Two []Card
+	Three []Card
+	Four []Card
+}
+
+// Card 卡包
+type Card struct{
     ID uint //索引
     UserID uint //用户id
+	PeriodID uint //期数id
     Number string //卡号
-    是否中奖 uint //是否中奖 0未中奖 1一等奖 2二等奖 
+    IsWin uint //是否中奖 0未中奖 1一等奖 2二等奖 
+	
+	User *User //用户
 }
 ```
 # 每日答题
@@ -179,20 +240,31 @@ type care{
 
 ## 数据
 ```go
-user {
+package export
+
+import "time"
+// User 用户
+type User struct {
     ID uint 
     UserID uint 
-    UpDateAt time.time //更新日期
+    UpDateAt time.Time //更新日期
 
-    题目 []题库
-    选择答案 []uint
+	Question []QuestionBank
+    Option []uint
 }
 
-type 题库{
+// QuestionBank 题库
+type QuestionBank struct{
     ID uint
-    问题 string
-    选项 []string
-    答案 uint
+	Question string //题目
+	Option []string //选项
+	Answer uint //答案
+	Type uint //类型 对接Question
+}
+
+type Question struct{
+	ID uint 
+	Title string //标题
 }
 ```
 
