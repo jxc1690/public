@@ -100,7 +100,6 @@ type Work struct{
     DeleteAt time.Time //删除时间 删除 自己删自己的 或者控制台删除 更改为删除重新写
 
     UserID uint //发布人
-    Type uint //类型 0爱心留言区 1光荣故事会
 
     Title,Text string //标题与内容
     Img []string //图片
@@ -118,18 +117,30 @@ type Work struct{
     SaveNum uint //收藏数量
     CommNum uint //评论数量
 
-    Comm []Comment //评论
+    Comm []WorkComment //评论
 }
-
+type TypeReport uint
+const (
+    TypeReport_Work TypeReport = iota //文章
+    TypeReport_WallComment //留言墙评论
+    TypeReport_StoryComment //故事会评论
+)
+// Report 举报
 type Report struct {
 	ID uint //索引用
     CreateAt time.Time //创建时间
 
     WorkID uint //被举报的文章
     UserID uint //举报人
+	Type TypeReport //举报类型
     Reason string //举报原因
+	
+	Work *Work //文章
+	WrokComment *WorkComment //留言墙评论
+	StoryComment *StoryComment //故事会评论
 }
 
+// Recommend 推荐
 type Recommend struct{
 	ID uint //索引用
 	CreateAt time.Time //创建时间
@@ -138,25 +149,74 @@ type Recommend struct{
 	WorkList []Work `gorm:"-"`//文章列表ork 
 }
 
+// RecommendList 推荐列表
 type RecommendList struct{
 	WorkID uint //WorkID
 	Level uint //推荐等级
 }
 
-
 // Comment 评论
-type Comment struct{
-    ID uint //索引
+type Comment struct {
+	ID uint //索引
+	CreateAt time.Time
+	UserID uint //用户
+    Text string //评论内容
+	Like uint //点赞数
+	Block bool //是否屏蔽
+}
 
-    WorkID uint //属于文章
-    Reply uint //回复的消息
 
-    Like uint //点赞
-
-    Text string //标题以及内容
+type WorkComment struct{
+	Comment
+	Reply uint //回复的消息
+	Comment *WorkComment //回复的消息
 	
+	WorkID uint //属于文章
 	Work *Work //文章
-	Comment *Comment //回复的消息
+}
+
+// Story 故事会
+type Story struct{
+    ID uint //索引
+    CreateAt time.Time //创建时间
+
+	Number string //期号
+
+    Title,Text string //标题与内容
+    Img []string //图片
+    video string //视频地址
+    videoImg string //视频首针图片
+	
+    LikeNum uint //点赞数
+    SaveNum uint //收藏数量
+    CommNum uint //评论数量
+	RecommendCommID []uint //推荐评论
+	RecommendComm []StoryComment //推荐评论
+
+    Comm []StoryComment //评论
+}
+
+// StoryComment 评论
+type StoryComment struct{
+	Comment
+
+	WorkID uint //属于文章
+	Reply uint //回复的消息
+	Comment *StoryComment //回复的消息
+}
+type TypeSave uint //类型 0留言墙 1故事会
+const (
+	TypeSave_Wall TypeSave = iota
+	TypeSave_Story TypeSave
+)
+
+type Save struct{
+    ID uint 
+    CreateAt time.Time //创建时间
+
+    UserID uint //用户
+    WorkID uint //文章
+    Type TypeSave //类型 0留言墙 1故事会
 }
 
 // ShieldingRules 屏蔽规则
