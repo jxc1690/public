@@ -78,151 +78,150 @@ type HistoryPoints struct{
 
 
 ## 数据库
+
 ```go
 package export
 
 import "time"
-// 留言区补充用户信息
-type WallInfo struct{
-    ID uint //索引用
-    UserID uint //链接user基础信息
 
-    SendWork []uint //发布的文章
-    SaveWork []uint //收藏的文章
-    Reply []uint //回复消息
-	
+// 留言区补充用户信息
+type WallInfo struct {
+	ID     uint //索引用
+	UserID uint //链接user基础信息
+
+	SendWork []uint //发布的文章
+	SaveWork []uint //收藏的文章
+	Reply    []uint //回复消息
+
 	User *User //用户
 }
 
-type Work struct{
-    ID uint //索引用
-    CreateAt time.Time //创建时间
-    DeleteAt time.Time //删除时间 删除 自己删自己的 或者控制台删除 更改为删除重新写
+type Work struct {
+	ID       uint      //索引用
+	CreateAt time.Time //创建时间
+	DeleteAt time.Time //删除时间 删除 自己删自己的 或者控制台删除 更改为删除重新写
 
-    UserID uint //发布人
+	UserID uint //发布人
 
-    Title,Text string //标题与内容
-    Img []string //图片
-    video string //视频地址
-    videoImg string //视频首针图片
+	Title, Text string   //标题与内容
+	Img         []string //图片
+	video       string   //视频地址
+	videoImg    string   //视频首针图片
 
-    IsTop bool //是否置顶
+	IsTop bool //是否置顶
 	Block bool //是否屏蔽
 
-	Recommend bool //是否推荐
+	Recommend      bool //是否推荐
 	RecommendLevel uint //推荐等级
 	//推荐 
 
-    LikeNum uint //点赞数
-    SaveNum uint //收藏数量
-    CommNum uint //评论数量
+	LikeNum uint //点赞数
+	SaveNum uint //收藏数量
+	CommNum uint //评论数量
 
-    Comm []WorkComment //评论
+	Comm []WorkComment //评论
+	Other string //其他数据
 }
-type TypeReport uint
+type TypeWhere uint
+
 const (
-    TypeReport_Work TypeReport = iota //文章
-    TypeReport_WallComment //留言墙评论
-    TypeReport_StoryComment //故事会评论
+	TypeWhere_Work         TypeWhere = iota //文章
+	TypeWhere_Story                         //故事会
+	TypeWhere_WallComment                   //留言墙评论
+	TypeWhere_StoryComment                  //故事会评论
 )
+
 // Report 举报
 type Report struct {
-	ID uint //索引用
-    CreateAt time.Time //创建时间
+	ID       uint      //索引用
+	CreateAt time.Time //创建时间
 
-    WorkID uint //被举报的文章
-    UserID uint //举报人
-	Type TypeReport //举报类型
-    Reason string //举报原因
-	
-	Work *Work //文章
-	WrokComment *WorkComment //留言墙评论
-	StoryComment *StoryComment //故事会评论
+	WorkID uint      //被举报的文章
+	UserID uint      //举报人
+	Type   TypeWhere //举报类型
+	Reason string    //举报原因
+
+	Data         any         //文章
 }
 
 // Recommend 推荐
-type Recommend struct{
-	ID uint //索引用
+type Recommend struct {
+	ID       uint      //索引用
 	CreateAt time.Time //创建时间
-	
+
 	RecommendList []RecommendList //推荐列表
-	WorkList []Work `gorm:"-"`//文章列表ork 
+	WorkList      []Work          `gorm:"-"` //文章列表ork 
 }
 
 // RecommendList 推荐列表
-type RecommendList struct{
+type RecommendList struct {
 	WorkID uint //WorkID
-	Level uint //推荐等级
+	Level  uint //推荐等级
 }
 
 // Comment 评论
 type Comment struct {
-	ID uint //索引
+	ID       uint //索引
 	CreateAt time.Time
-	UserID uint //用户
-    Text string //评论内容
-	Like uint //点赞数
-	Block bool //是否屏蔽
+	UserID   uint   //用户
+	Text     string //评论内容
+	Like     uint   //点赞数
+	Block    bool   //是否屏蔽
+	Other string //其他数据
 }
 
-
-type WorkComment struct{
+type WorkComment struct {
 	Comment
-	Reply uint //回复的消息
+	Reply   uint         //回复的消息
 	Comment *WorkComment //回复的消息
-	
-	WorkID uint //属于文章
-	Work *Work //文章
+
+	WorkID uint  //属于文章
+	Work   *Work //文章
 }
 
 // Story 故事会
-type Story struct{
-    ID uint //索引
-    CreateAt time.Time //创建时间
+type Story struct {
+	ID       uint      //索引
+	CreateAt time.Time //创建时间
 
 	Number string //期号
 
-    Title,Text string //标题与内容
-    Img []string //图片
-    video string //视频地址
-    videoImg string //视频首针图片
-	
-    LikeNum uint //点赞数
-    SaveNum uint //收藏数量
-    CommNum uint //评论数量
-	RecommendCommID []uint //推荐评论
-	RecommendComm []StoryComment //推荐评论
+	Title, Text string   //标题与内容
+	Img         []string //图片
+	video       string   //视频地址
+	videoImg    string   //视频首针图片
 
-    Comm []StoryComment //评论
+	LikeNum         uint           //点赞数
+	SaveNum         uint           //收藏数量
+	CommNum         uint           //评论数量
+	RecommendCommID []uint         //推荐评论
+	RecommendComm   []StoryComment //推荐评论
+
+	Comm []StoryComment //评论
 }
 
 // StoryComment 评论
-type StoryComment struct{
+type StoryComment struct {
 	Comment
 
-	WorkID uint //属于文章
-	Reply uint //回复的消息
+	WorkID  uint          //属于文章
+	Reply   uint          //回复的消息
 	Comment *StoryComment //回复的消息
 }
-type TypeSave uint //类型 0留言墙 1故事会
-const (
-	TypeSave_Wall TypeSave = iota
-	TypeSave_Story TypeSave
-)
 
-type Save struct{
-    ID uint 
-    CreateAt time.Time //创建时间
+type Save struct {
+	ID       uint
+	CreateAt time.Time //创建时间
 
-    UserID uint //用户
-    WorkID uint //文章
-    Type TypeSave //类型 0留言墙 1故事会
+	UserID uint     //用户
+	WorkID uint     //文章
+	Type   TypeWhere //类型 0留言墙 1故事会
 }
 
 // ShieldingRules 屏蔽规则
-type ShieldingRules struct{
-    ID uint 
-    Reg string
+type ShieldingRules struct {
+	ID  uint
+	Reg string
 }
 ```
 
@@ -232,17 +231,19 @@ type ShieldingRules struct{
        - 开关 历史推荐
        - 首页背景图地址
        - 我的背景图地址
+       - 屏蔽规则
 - 个人相关
   1. [ ] 获取个人信息
       - 昵称 头像 搜索ID 积分
       - 自己发布的文章（前10篇）
-  2. [ ] 获取收藏夹
+  2. [ ] 自己发布的文章(起始ID,排序类型)
+  3. [ ] 获取收藏夹
       - 收藏的文章
-  3. [ ] 获取未读消息
+  4. [ ] 获取未读消息
         - 相关文章
         - 相关用户
         - 回复的评论
-  4. [ ] 获取积分变动记录(起始ID,排序类型)
+  5. [ ] 获取积分变动记录(起始ID,排序类型)
 - 留言墙
   1. [ ] 获取留言墙（起始ID,排序类型）
       - 文章ID 标题 内容 图片 视频地址 视频首针图片 发布人ID 发布人昵称 发布人头像 发布时间 点赞数 收藏数 评论数 是否置顶
@@ -254,7 +255,22 @@ type ShieldingRules struct{
   4. [ ] 上传图片视频
       - 限制视频30S
       - 限制图片9张（压缩一波
-  5. [ ] 发表评论（文章ID，回复ID，内容）
+- 故事会
+    1. [ ] 获取故事会列表
+        - 当前期号 标题
+        - 历史期号 标题
+    2. [ ] 获取故事会内容(期号)
+        - 期号 标题 内容 图片 视频地址 视频首针图片
+        - 前50 评论
+    3. [ ] 获取评论(故事会ID,起始ID)
+ - 共享接口
+   1. [ ] 发表评论（文章ID，回复ID，内容,类型）
+   2. [ ] 点赞（目标ID，类型）
+   3. [ ] 收藏（目标ID，类型）
+   4. [ ] 取消点赞（目标ID，类型）
+   5. [ ] 取消收藏（目标ID，类型）
+   6. [ ] 举报（目标ID，类型，原因）
+   7. [ ] 删除（目标ID，类型）只能删除自己的文章和评论
 
 # 爱心池（抽奖
 ## 页面
