@@ -108,6 +108,7 @@ type Work struct{
     videoImg string //视频首针图片
 
     IsTop bool //是否置顶
+	Block bool //是否屏蔽
 
 	Recommend bool //是否推荐
 	RecommendLevel uint //推荐等级
@@ -118,6 +119,15 @@ type Work struct{
     CommNum uint //评论数量
 
     Comm []Comment //评论
+}
+
+type Report struct {
+	ID uint //索引用
+    CreateAt time.Time //创建时间
+
+    WorkID uint //被举报的文章
+    UserID uint //举报人
+    Reason string //举报原因
 }
 
 type Recommend struct{
