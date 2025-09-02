@@ -7,28 +7,31 @@
 ```go
 package export
 
-import "time"
-//用户总信息
-type User struct{
-    ID uint  //索引用ID
-    CreateAt time.Time //创建时间
-    SreachID uint //搜索用
+// User 用户
+type User struct {
+	model.ModelCU
 
-    PhoneNumber string //手机号
-    NickName string //昵称
-    UserName string //用户名称
+	ID       uint `json:"UserID" form:"UserID" gorm:"primarykey;autoIncrement"`
+	SearchID uint `json:"SearchID" gorm:"unique;column:SearchID"` //搜索ID (唯一)(随机生成8位数字)
 
-    Points uint //积分
-	HistoryPoints []HistoryPoints //积分变动记录
+	AuthorID     string `json:"authorID" gorm:"index;column:authorID"`          //用户id
+	FirstName    string `json:"firstName" gorm:"column:firstName"`              //首名
+	LastName     string `json:"lastName" gorm:"column:lastName"`                //尾名
+	NickName     string `json:"nickName" gorm:"index;column:nickName"`          //昵称
+	IphoneNumber string `json:"iphoneNumber" gorm:"unique;column:iphoneNumber"` //手机号
+	Avatar       string `json:"avatar" gorm:"column:avatar"`                    //头像
+
+	Points        uint           `json:"points" gorm:"column:points"`                          //积分
+	HistoryPoints []HistoryPoint `json:"historyPoints" gorm:"foreignKey:UserID;references:ID"` //历史总积分
 }
 
-type HistoryPoints struct{
-    ID uint 
-    CreateAt time.Time
-    UserID uint 
-    Change uint //积分变动
-    ChangeText string //变动原因 
-    out uint //当前积分
+type HistoryPoint struct {
+	model.ModelC
+	UserID     uint      `json:"UserID;" grom:"index;column:UserID"`                  //用户ID
+	Change     uint      `json:"Change,omitempty" grom:"index;column:Change"`         //积分变动
+	ChangeType TypePoint `json:"ChangeType,omitempty" grom:"index;column:ChangeType"` //变动类型
+	ChangeText string    `json:"ChangeText,omitempty" grom:"index;column:ChangeText"` //变动原因
+	Out        uint      `json:"Out,omitempty" grom:"index;column:Out"`               //当前积分
 }
 ```
 
@@ -82,46 +85,7 @@ type HistoryPoints struct{
 ```go
 package export
 
-import "time"
-
-// 留言区补充用户信息
-type WallInfo struct {
-	ID     uint //索引用
-	UserID uint //链接user基础信息
-
-	SendWork []uint //发布的文章
-	SaveWork []uint //收藏的文章
-	Reply    []uint //回复消息
-
-	User *User //用户
-}
-
-type Work struct {
-	ID       uint      //索引用
-	CreateAt time.Time //创建时间
-	DeleteAt time.Time //删除时间 删除 自己删自己的 或者控制台删除 更改为删除重新写
-
-	UserID uint //发布人
-
-	Title, Text string   //标题与内容
-	Img         []string //图片
-	video       string   //视频地址
-	videoImg    string   //视频首针图片
-
-	IsTop bool //是否置顶
-	Block bool //是否屏蔽
-
-	Recommend      bool //是否推荐
-	RecommendLevel uint //推荐等级
-	//推荐 
-
-	LikeNum uint //点赞数
-	SaveNum uint //收藏数量
-	CommNum uint //评论数量
-
-	Comm []WorkComment //评论
-	Other string //其他数据
-}
+// TypeWhere 指定位置 0文章 1故事会 2留言墙评论 3故事会评论
 type TypeWhere uint
 
 const (
@@ -131,97 +95,156 @@ const (
 	TypeWhere_StoryComment                  //故事会评论
 )
 
+// TypePoint 积分类型 0未知 1签到 2分享 3评论 4作品上传 5点赞 6新用户注册 7管理员操作 8购买
+type TypePoint uint
+
+const (
+	TypePoint_Unknown TypePoint = iota
+	TypePoint_SignIn            //签到
+	TypePoint_Share             //分享
+	TypePoint_Comment           //评论
+	TypePoint_Work              //作品上传
+	TypePoint_Like              //点赞
+	TypePoint_NewUser           //新用户注册
+	TypePoint_Admin             //管理员操作
+	TypePoint_Buy               //购买
+)
+
+type BaseWork struct {
+	model.ModelCD
+
+	Title    string   `json:"Title,omitempty" gorm:"column:Title"`       //标题
+	Text     string   `json:"Text,omitempty" gorm:"column:Text"`         //内容
+	Img      []string `json:"Img,omitempty" gorm:"column:Img"`           //图片
+	video    string   `json:"Video,omitempty" gorm:"column:Video"`       //视频地址
+	videoImg string   `json:"VideoImg,omitempty" gorm:"column:VideoImg"` //视频首针图片
+
+	LikeNum uint `json:"LikeNum,omitempty" gorm:"column:LikeNum"` //点赞数
+	SaveNum uint `json:"SaveNum,omitempty" gorm:"column:SaveNum"` //收藏数量
+	CommNum uint `json:"CommNum,omitempty" gorm:"column:CommNum"` //评论数量
+
+	Other string `json:"Other" gorm:"column:Other"` //其他数据
+}
+
+// BaseComment 评论
+type BaseComment struct {
+	model.ModelCU
+
+	UserID uint   `json:"UserID,omitempty" gorm:"column:UserID"` //用户
+	Text   string `json:"Text,omitempty" gorm:"column:Text"`     //评论内容
+	Like   uint   `json:"Like,omitempty" gorm:"column:Like"`     //点赞数
+
+	Reply     uint `json:"Reply,omitempty" gorm:"column:Reply"`         //回复的消息
+	ReplyData any  `json:"ReplyData,omitempty" gorm:"column:ReplyData"` //被回复的消息
+
+	Block bool   `json:"Block,omitempty" gorm:"index;column:Block"` //是否屏蔽
+	Other string `json:"Other,omitempty" gorm:"column:Other"`       //其他数据
+}
+
+// UserWallInfo 用户墙信息
+type UserWallInfo struct {
+	model.ModelCU
+	ID uint `json:"UserWallInfoID" form:"UserWallInfoID" gorm:"primarykey;autoIncrement"`
+
+	UserID uint `json:"UserID,omitempty"   gorm:"column:UserID"` //链接user基础信息
+
+	SendWork   []uint `json:"SendWork,omitempty"  gorm:"serializer:json;column:SendWork"`     //发布的文章
+	SaveWork   []uint `json:"SaveWork,omitempty"  gorm:"serializer:json;column:SaveWork"`     //收藏的文章
+	DelayReply []uint `json:"DelayReply,omitempty"  gorm:"serializer:json;column:DelayReply"` //回复消息
+
+	User *User  `json:"User" gorm:"foreignKey:UserID;references:ID"` //用户
+	Save []Save `json:"Save" gorm:"foreignKey:SaveID;references:ID"` //收藏
+}
+
+// Work 作品
+type Work struct {
+	BaseWork
+	ID uint `json:"WorkID" form:"WorkID" gorm:"primarykey;autoIncrement"`
+
+	IsTop bool `json:"IsTop" gorm:"column:IsTop"` //是否置顶
+	Block bool `json:"Block" gorm:"column:Block"` //是否屏蔽
+
+	Recommend      bool `json:"Recommend" gorm:"column:Recommend"`           //是否推荐
+	RecommendLevel uint `json:"RecommendLevel" gorm:"column:RecommendLevel"` //推荐等级
+
+	Comm []WorkComment `json:"Comm" gorm:"foreignKey:WorkID;references:ID"` //评论
+
+	UserID uint  `json:"UserID" gorm:"column:UserID"`                 //用户ID
+	User   *User `json:"User" gorm:"foreignKey:UserID;references:ID"` //用户信息
+}
+
+// WorkComment 作品评论
+type WorkComment struct {
+	BaseComment
+	ID uint `json:"WorkCommentID" form:"WorkCommentID" gorm:"primarykey;autoIncrement"`
+
+	SaveNumber uint  `json:"SaveNumber,omitempty" gorm:"column:SaveNumber"` //收藏数
+	WorkID     uint  `json:"WorkID,omitempty" gorm:"column:WorkID"`         //属于文章
+	Work       *Work `json:"Work,omitempty" gorm:"column:Work"`             //文章
+}
+
 // Report 举报
 type Report struct {
-	ID       uint      //索引用
-	CreateAt time.Time //创建时间
+	model.ModelC
+	ID uint `json:"ReportID" form:"ReportID" gorm:"primarykey;autoIncrement"`
 
-	WorkID uint      //被举报的文章
-	UserID uint      //举报人
-	Type   TypeWhere //举报类型
-	Reason string    //举报原因
+	WorkID    uint      `json:"WorkID,omitempty" gorm:"column:WorkID"` //被举报的文章
+	UserID    uint      `json:"UserID,omitempty" gorm:"column:UserID"` //举报人
+	TypeWhere TypeWhere `json:"Type,omitempty" gorm:"column:Type"`     //举报位置
+	Reason    string    `json:"Reason,omitempty" gorm:"column:Reason"` //举报原因
 
-	Data         any         //文章
+	Data any `json:"Data,omitempty"` //文章
 }
 
-// Recommend 推荐
+// Recommend 推荐列表
 type Recommend struct {
-	ID       uint      //索引用
-	CreateAt time.Time //创建时间
+	model.ModelC
+	ID uint `json:"RecommendID" form:"RecommendID" gorm:"primarykey;autoIncrement"` //推荐ID
 
-	RecommendList []RecommendList //推荐列表
-	WorkList      []Work          `gorm:"-"` //文章列表ork 
+	ShowHome bool `json:"ShowHome" gorm:"type:boolean;default:true;column:ShowHome"`                    //是否展示在首页
+	WorkID   uint `json:"WorkID" gorm:"type:int;not null;column:WorkID"`                                //文章ID
+	Work     Work `gorm:"foreignKey:WorkID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` //关联文章
 }
 
-// RecommendList 推荐列表
-type RecommendList struct {
-	WorkID uint //WorkID
-	Level  uint //推荐等级
-}
 
-// Comment 评论
-type Comment struct {
-	ID       uint //索引
-	CreateAt time.Time
-	UserID   uint   //用户
-	Text     string //评论内容
-	Like     uint   //点赞数
-	Block    bool   //是否屏蔽
-	Other string //其他数据
-}
-
-type WorkComment struct {
-	Comment
-	Reply   uint         //回复的消息
-	Comment *WorkComment //回复的消息
-
-	WorkID uint  //属于文章
-	Work   *Work //文章
-}
-
-// Story 故事会
+// Story 故事会作品！
 type Story struct {
-	ID       uint      //索引
-	CreateAt time.Time //创建时间
+	BaseWork
+	ID uint `json:"StoryID" form:"StoryID" gorm:"primarykey;autoIncrement"`
+	//期数
+	Episode string `json:"Episode" gorm:"column:Episode"` //期数
 
-	Number string //期号
-
-	Title, Text string   //标题与内容
-	Img         []string //图片
-	video       string   //视频地址
-	videoImg    string   //视频首针图片
-
-	LikeNum         uint           //点赞数
-	SaveNum         uint           //收藏数量
-	CommNum         uint           //评论数量
-	RecommendCommID []uint         //推荐评论
-	RecommendComm   []StoryComment //推荐评论
-
-	Comm []StoryComment //评论
+	Comm []StoryComment `json:"Comm" gorm:"foreignKey:StoryID;references:ID"` //评论
 }
 
-// StoryComment 评论
+// StoryComment 故事会评论
 type StoryComment struct {
-	Comment
+	BaseComment
+	ID uint `json:"StoryCommentID" form:"StoryCommentID" gorm:"primarykey;autoIncrement"`
 
-	WorkID  uint          //属于文章
-	Reply   uint          //回复的消息
-	Comment *StoryComment //回复的消息
+	SaveNumber uint   `json:"SaveNumber,omitempty" gorm:"column:SaveNumber"` //收藏数
+	StoryID    uint   `json:"StoryID,omitempty" gorm:"column:StoryID"`       //属于文章
+	Story      *Story `json:"Story,omitempty" gorm:"column:Story"`           //文章
 }
 
+// Save 收藏
 type Save struct {
-	ID       uint
-	CreateAt time.Time //创建时间
+	model.ModelC
+	ID uint `json:"SaveID" form:"SaveID" gorm:"primarykey;autoIncrement"`
 
-	UserID uint     //用户
-	WorkID uint     //文章
-	Type   TypeWhere //类型 0留言墙 1故事会
+	UserID uint      `json:"UserID,omitempty" gorm:"column:UserID"` //收藏人
+	WorkID uint      `json:"WorkID,omitempty" gorm:"column:WorkID"` //被收藏的文章
+	Work   Work      `json:"Work" gorm:"foreignKey:WorkID;references:ID"`
+	Type   TypeWhere //类型
 }
 
 // ShieldingRules 屏蔽规则
 type ShieldingRules struct {
-	ID  uint
-	Reg string
+	model.ModelCU
+	ID uint `json:"ShieldingRulesID" form:"ShieldingRulesID" gorm:"primarykey;autoIncrement"`
+
+	Using bool   `json:"Using,omitempty" gorm:"column:Using"` //是否启用
+	Reg   string `json:"Reg,omitempty" gorm:"column:Reg"`     //正则表达式
 }
 ```
 
